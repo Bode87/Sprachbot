@@ -67,15 +67,25 @@
 </head>
 <body>
     <h1>Speech to Text</h1>
+    <label for="languageSelect">Sprachauswahl:</label>
+    <select id="languageSelect">
+        <option value="en-US">Englisch (USA)</option>
+        <option value="de-DE" selected>Deutsch (Deutschland)</option>
+        <option value="es-ES">Spanisch (Spanien)</option>
+
+    </select>
     <button id="start_stop">Start Aufnahme</button>
     <div id="transcript" class="box"></div>
     <div id="stored_transcripts" class="box"></div>
+    <button id="clear_transcripts">Gespeicherte Transkripte löschen</button>
 
     <script>
         let recognizing = false;
+        let recognitionStarted = false;
         const transcriptDiv = document.getElementById('transcript');
         const storedTranscriptsDiv = document.getElementById('stored_transcripts');
         const startStopButton = document.getElementById('start_stop');
+        const languageSelect = document.getElementById('languageSelect');
         let finalTranscript = '';
         let interimTranscript = '';
 
@@ -87,17 +97,27 @@
         recognition.lang = 'de-DE';
         recognition.maxAlternatives = 10;
 
+        languageSelect.addEventListener('change', () => {
+            recognition.lang = languageSelect.value;
+            recognitionStarted = false;
+        });
+
         recognition.onstart = function() {
             recognizing = true;
+            recognitionStarted = true;
             startStopButton.textContent = 'Stop Aufnahme';
         };
 
         recognition.onerror = function(event) {
+            if (!recognitionStarted) {
+                alert("Die ausgewählte Sprache wird nicht unterstützt oder es ist ein Fehler aufgetreten.");
+            }
             console.log('Speech recognition error detected: ' + event.error);
         };
 
         recognition.onend = function() {
             recognizing = false;
+            recognitionStarted = false;
             startStopButton.textContent = 'Start Aufnahme';
             saveTranscript();
         };
@@ -168,6 +188,29 @@
                 recognition.stop();
             }
         };
+        function clearStoredTranscripts() {
+            storedTranscriptsDiv.innerHTML = '';
+        }
+        startStopButton.addEventListener('click', function() {
+            if (recognizing) {
+                recognition.stop();
+                return;
+            }
+            finalTranscript = '';
+            recognition.start();
+        });
+
+        window.onbeforeunload = function() {
+            if (recognizing) {
+                recognition.stop();
+            }
+        };
+
+        function clearStoredTranscripts() {
+            storedTranscriptsDiv.innerHTML = '';
+        }
+
+        document.getElementById('clear_transcripts').addEventListener('click', clearStoredTranscripts);
 
         // Service Worker registration
         if ('serviceWorker' in navigator) {
