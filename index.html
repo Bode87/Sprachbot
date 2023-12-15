@@ -6,64 +6,90 @@
     <title>Speech to Text Tool</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" sizes="180x180" href="path/to/icon-180x180.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
         body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            background-color: #1c1c1e;
-            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
-            margin: 0;
         }
+
         h1 {
-            font-size: 2.5em;
-            margin: 0.5em 0;
+            color: #333;
         }
+
         button {
-            background-color: #007aff;
+            background-color: #4a90e2;
             color: white;
-            padding: 8px 16px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 14px;
-            margin: 5px;
-            cursor: pointer;
+            padding: 10px 20px;
+            font-size: 16px;
             border: none;
-            border-radius: 15px;
-            transition: background-color 0.3s, box-shadow 0.3s;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+
+        button i {
+            margin-right: 8px;
+        }
+
         button:hover {
-            background-color: #005ecb;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background-color: #357ABD;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
         }
+
         .box {
-            background-color: #2c2c2e;
-            border-radius: 15px;
-            padding: 15px;
+            background-color: #292525;
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
             width: 80%;
             margin-top: 20px;
+            height: auto;
             overflow-y: auto;
-            height: 150px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            max-height: 50vh;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
         }
+
         .transcript-entry {
             display: flex;
             align-items: center;
             margin-bottom: 10px;
+            padding: 5px;
+            border-bottom: 1px solid #eaeaea;
         }
+
         .transcript-text {
             flex-grow: 1;
+            margin-right: 10px;
         }
+
         .copied-message {
             display: none;
-            color: #4CAF50;
+            color: #8c938c;
             margin-left: 10px;
         }
+
+        select {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            margin: 10px 0;
+        }
     </style>
+
 </head>
 <body>
     <h1>Speech to Text</h1>
@@ -72,12 +98,11 @@
         <option value="en-US">Englisch (USA)</option>
         <option value="de-DE" selected>Deutsch (Deutschland)</option>
         <option value="es-ES">Spanisch (Spanien)</option>
-
     </select>
-    <button id="start_stop">Start Aufnahme</button>
+    <button id="start_stop"><i class="fas fa-microphone"></i> Start </button>
     <div id="transcript" class="box"></div>
     <div id="stored_transcripts" class="box"></div>
-    <button id="clear_transcripts">Gespeicherte Transkripte löschen</button>
+    <button id="clear_transcripts"><i class="fas fa-trash"></i> Transkripte löschen</button>
 
     <script>
         let recognizing = false;
@@ -100,6 +125,15 @@
         languageSelect.addEventListener('change', () => {
             recognition.lang = languageSelect.value;
             recognitionStarted = false;
+        });
+
+        window.addEventListener('load', () => {
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                console.log("Diese PWA läuft bereits im Standalone-Modus.");
+            } else {
+                // Hier Code für die Anzeige der Meldung einfügen
+                alert("Fügen Sie diese App zu Ihrem Home-Bildschirm hinzu: Tippen Sie auf das Teilen-Symbol und dann auf 'Zum Home-Bildschirm'.");
+            }
         });
 
         recognition.onstart = function() {
