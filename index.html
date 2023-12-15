@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech to Text Tool</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" sizes="180x180" href="path/to/icon-180x180.png">
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #1c1c1e;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin: 0.5em 0;
+        }
+        button {
+            background-color: #007aff;
+            color: white;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 15px;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        button:hover {
+            background-color: #005ecb;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .box {
+            background-color: #2c2c2e;
+            border-radius: 15px;
+            padding: 15px;
+            width: 80%;
+            margin-top: 20px;
+            overflow-y: auto;
+            height: 150px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+        .transcript-entry {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .transcript-text {
+            flex-grow: 1;
+        }
+        .copied-message {
+            display: none;
+            color: #4CAF50;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Speech to Text</h1>
+    <button id="start_stop">Start Aufnahme</button>
+    <div id="transcript" class="box"></div>
+    <div id="stored_transcripts" class="box"></div>
+
+    <script>
+        let recognizing = false;
+        const transcriptDiv = document.getElementById('transcript');
+        const storedTranscriptsDiv = document.getElementById('stored_transcripts');
+        const startStopButton = document.getElementById('start_stop');
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        const speechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new speechRecognition();
+
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'de-DE';
+        recognition.maxAlternatives = 10;
+
+        recognition.onstart = function() {
+            recognizing = true;
+            startStopButton.textContent = 'Stop Aufnahme';
+        };
+
+        recognition.onerror = function(event) {
+            console.log('Speech recognition error detected: ' + event.error);
+        };
+
+        recognition.onend = function() {
+            recognizing = false;
+            startStopButton.textContent = 'Start Aufnahme';
+            saveTranscript();
+        };
+
+        recognition.onresult = function(event) {
+            interimTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript + ' ';
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+            transcriptDiv.innerHTML = finalTranscript + '<i style="color:#ddd;">' + interimTranscript + '</i>';
+        };
+
+        function saveTranscript() {
+            if (finalTranscript.trim().length > 0) {
+                const dateTime = new Date().toLocaleString();
+                const transcriptText = finalTranscript.trim();
+                const entry = document.createElement('div');
+                entry.className = 'transcript-entry';
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'transcript-text';
+                textSpan.innerHTML = '<strong>' + dateTime + ':</strong> ' + transcriptText;
+                entry.appendChild(textSpan);
+
+                const copyButton = document.createElement('button');
+                copyButton.textContent = 'Kopieren';
+                copyButton.onclick = function() {
+                    navigator.clipboard.writeText(transcriptText).then(() => {
+                        showCopiedMessage(copyButton);
+                    });
+                };
+                entry.appendChild(copyButton);
+
+                const copiedMessage = document.createElement('span');
+                copiedMessage.className = 'copied-message';
+                copiedMessage.textContent = 'Copied';
+                entry.appendChild(copiedMessage);
+
+                storedTranscriptsDiv.appendChild(entry);
+
+                finalTranscript = '';
+            }
+        }
+
+        function showCopiedMessage(button) {
+            const message = button.nextElementSibling;
+            message.style.display = 'inline';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 2000);
+        }
+
+        startStopButton.addEventListener('click', function() {
+            if (recognizing) {
+                recognition.stop();
+                return;
+            }
+            finalTranscript = '';
+            recognition.start();
+        });
+
+        window.onbeforeunload = function() {
+            if (recognizing) {
+                recognition.stop();
+            }
+        };
+
+        // Service Worker registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('service-worker.js').then(function(registration) {
+                    // Registration successful
+                }, function(err) {
+                    // Registration failed
+                });
+            });
+        }
+    </script>
+</body>
+</html>
